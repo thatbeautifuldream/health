@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/form",
+      "destination": "https://docs.google.com/forms/d/e/1FAIpQLSfXkOZIW17gWZ8emujkTbJKNlz-cNfALbV6mjv4olmGCYSqSw/viewform?usp=dialog"
+    }
+  ]
+}
