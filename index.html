@@ -48,14 +48,276 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body className="bg-white m-0 p-0">
-    <iframe
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSD2lwGuPqmAR64B5N4VaN3mvQT8iRVoBcwELKlPi-agoJF3ZQcHgQ1nDgS1Q0T3sPNeszSA2WNsgEq/pubhtml?widget=true&amp;headers=false"
-      class="size-full border-0"
-      frameborder="0"
-      scrolling="yes"
-      title="Health Tracking Dashboard - Diet and Weight Management Spreadsheet"
-    >
-    </iframe>
+  <body class="bg-white dark:bg-gray-950">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+      <!-- Header -->
+      <header class="mb-8">
+        <h1
+          class="font-mono text-[0.8125rem]/6 font-medium tracking-widest uppercase text-gray-600 dark:text-gray-100"
+        >
+          Milind's Health Tracker
+        </h1>
+        <p class="mt-2 text-sm/6 font-medium text-gray-600 dark:text-gray-400">
+          Daily metrics and wellness journey
+        </p>
+      </header>
+
+      <!-- Loading State -->
+      <div id="loading" class="py-20">
+        <p
+          class="font-mono text-[0.8125rem]/6 font-medium tracking-widest text-gray-600 dark:text-gray-400"
+        >
+          Fetching milind's wellness journey 🥗
+        </p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error" class="hidden">
+        <div class="bg-red-400/25 border border-red-400/50 p-6">
+          <p class="text-red-800 dark:text-red-300 font-medium"></p>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div id="content" class="hidden space-y-6">
+        <!-- Stats Summary -->
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- Stats will be inserted here -->
+        </div>
+
+        <!-- Data Table -->
+        <div
+          class="overflow-x-auto border border-gray-950/5 dark:border-white/10"
+        >
+          <table
+            class="min-w-full divide-y divide-gray-950/5 dark:divide-white/10"
+          >
+            <thead class="bg-gray-100 dark:bg-white/5">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Date
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Weight
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Water
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Steps
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Nuts
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Tea
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Lunch
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Dinner
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold text-gray-950 dark:text-white uppercase tracking-wider"
+                >
+                  Notes
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="data-body"
+              class="divide-y divide-gray-950/5 dark:divide-white/10 bg-white dark:bg-gray-950"
+            >
+              <!-- Data will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-xs text-gray-700 dark:text-gray-400 text-center">
+          Last updated:
+          <span
+            id="last-updated"
+            class="font-medium text-gray-950 dark:text-white"
+          ></span>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      const API_URL =
+        "https://opensheet.elk.sh/1-2ph8z7JpmSj_oR5GTwZFCbhUubvyrxmmQILY5bDt8k/Form%20responses%201";
+
+      async function fetchHealthData() {
+        const loadingEl = document.getElementById("loading");
+        const errorEl = document.getElementById("error");
+        const contentEl = document.getElementById("content");
+        const dataBody = document.getElementById("data-body");
+        const statsEl = document.getElementById("stats");
+
+        try {
+          const response = await fetch(API_URL);
+
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch data: ${response.status} ${response.statusText}`
+            );
+          }
+
+          const data = await response.json();
+
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error("No data available");
+          }
+
+          // Sort by date (most recent first)
+          const sortedData = [...data].reverse();
+
+          // Calculate stats from most recent entry
+          const latest = data[data.length - 1];
+          const totalEntries = data.length;
+          const avgWeight = (
+            data.reduce(
+              (sum, entry) => sum + (parseFloat(entry["Weight (kg)"]) || 0),
+              0
+            ) / data.filter((e) => e["Weight (kg)"]).length
+          ).toFixed(1);
+          const avgWater = (
+            data.reduce(
+              (sum, entry) => sum + (parseFloat(entry["Water (liters)"]) || 0),
+              0
+            ) / data.filter((e) => e["Water (liters)"]).length
+          ).toFixed(1);
+          const avgSteps = Math.round(
+            data.reduce((sum, entry) => sum + (parseInt(entry.Steps) || 0), 0) /
+              data.filter((e) => e.Steps).length
+          );
+
+          // Populate stats
+          statsEl.innerHTML = `
+            <div class="bg-sky-400/10 border border-sky-400/20 p-4">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Current Weight</div>
+              <div class="text-2xl font-bold text-gray-950 dark:text-white">${
+                latest["Weight (kg)"] || "-"
+              } <span class="text-sm font-normal">kg</span></div>
+            </div>
+            <div class="bg-blue-400/10 border border-blue-400/20 p-4">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Avg Water</div>
+              <div class="text-2xl font-bold text-gray-950 dark:text-white">${avgWater} <span class="text-sm font-normal">L</span></div>
+            </div>
+            <div class="bg-green-400/10 border border-green-400/20 p-4">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Avg Steps</div>
+              <div class="text-2xl font-bold text-gray-950 dark:text-white">${avgSteps.toLocaleString()}</div>
+            </div>
+            <div class="bg-purple-400/10 border border-purple-400/20 p-4">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Total Days</div>
+              <div class="text-2xl font-bold text-gray-950 dark:text-white">${totalEntries}</div>
+            </div>
+          `;
+
+          // Populate table
+          dataBody.innerHTML = sortedData
+            .map(
+              (entry) => `
+            <tr class="hover:bg-gray-100 dark:hover:bg-white/5">
+              <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-950 dark:text-white">${
+                entry.Date || "-"
+              }</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${
+                entry["Weight (kg)"] || "-"
+              } kg</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${
+                entry["Water (liters)"] || "-"
+              } L</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${
+                entry.Steps ? parseInt(entry.Steps).toLocaleString() : "-"
+              }</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                ${
+                  entry["Nuts (Y/N)"] === "Y"
+                    ? `
+                  <svg class="inline h-5 w-5" viewBox="0 0 22 22" fill="none" stroke-linecap="square">
+                    <circle cx="11" cy="11" r="11" class="fill-sky-400/25" />
+                    <circle cx="11" cy="11" r="10.5" class="stroke-sky-400/25" />
+                    <path d="M8 11.5L10.5 14L14 8" class="stroke-sky-800 dark:stroke-sky-300" stroke-width="2" />
+                  </svg>
+                `
+                    : '<span class="text-gray-400 dark:text-gray-600">-</span>'
+                }
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${
+                entry["CCF Tea (cups)"] || "-"
+              }</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                ${
+                  entry["Salad Before Lunch (Y/N)"] === "Y"
+                    ? `
+                  <svg class="inline h-5 w-5" viewBox="0 0 22 22" fill="none" stroke-linecap="square">
+                    <circle cx="11" cy="11" r="11" class="fill-sky-400/25" />
+                    <circle cx="11" cy="11" r="10.5" class="stroke-sky-400/25" />
+                    <path d="M8 11.5L10.5 14L14 8" class="stroke-sky-800 dark:stroke-sky-300" stroke-width="2" />
+                  </svg>
+                `
+                    : '<span class="text-gray-400 dark:text-gray-600">-</span>'
+                }
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                ${
+                  entry["Salad Before Dinner (Y/N)"] === "Y"
+                    ? `
+                  <svg class="inline h-5 w-5" viewBox="0 0 22 22" fill="none" stroke-linecap="square">
+                    <circle cx="11" cy="11" r="11" class="fill-sky-400/25" />
+                    <circle cx="11" cy="11" r="10.5" class="stroke-sky-400/25" />
+                    <path d="M8 11.5L10.5 14L14 8" class="stroke-sky-800 dark:stroke-sky-300" stroke-width="2" />
+                  </svg>
+                `
+                    : '<span class="text-gray-400 dark:text-gray-600">-</span>'
+                }
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title="${
+                entry.Notes || ""
+              }">${entry.Notes || "-"}</td>
+            </tr>
+          `
+            )
+            .join("");
+
+          // Update last updated time
+          document.getElementById("last-updated").textContent =
+            new Date().toLocaleString();
+
+          // Hide loading, show content
+          loadingEl.classList.add("hidden");
+          contentEl.classList.remove("hidden");
+        } catch (error) {
+          console.error("Error fetching health data:", error);
+          loadingEl.classList.add("hidden");
+          errorEl.classList.remove("hidden");
+          errorEl.querySelector("p").textContent = `Error: ${error.message}`;
+        }
+      }
+
+      // Fetch data on page load
+      fetchHealthData();
+
+      // Optionally refresh data every 5 minutes
+      setInterval(fetchHealthData, 5 * 60 * 1000);
+    </script>
   </body>
 </html>
