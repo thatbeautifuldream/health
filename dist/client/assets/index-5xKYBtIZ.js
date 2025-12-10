@@ -1,0 +1,1 @@
+import{j as r}from"./main-_EIhGSe3.js";const s=({error:e})=>r.jsx("div",{className:"container mx-auto px-4 py-8 max-w-7xl",children:r.jsx("div",{className:"bg-red-400/25 border border-red-400/50 p-6",children:r.jsxs("p",{className:"text-red-800 dark:text-red-300 font-medium",children:["Error: ",e.message]})})});export{s as errorComponent};
