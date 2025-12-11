@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatCard } from "~/components/stat-card";
 import { HealthTable } from "~/components/health-table";
 import { fetchHealthData } from "~/utils/health";
+import { formatLastUpdated } from "~/utils/date-util";
 
 export const Route = createFileRoute("/")({
   loader: async () => fetchHealthData(),
@@ -18,9 +19,7 @@ export const Route = createFileRoute("/")({
   errorComponent: ({ error }) => (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="bg-red-50 border border-red-200 p-6 rounded">
-        <p className="text-red-700 font-medium">
-          Error: {error.message}
-        </p>
+        <p className="text-red-700 font-medium">Error: {error.message}</p>
       </div>
     </div>
   ),
@@ -28,7 +27,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { data, stats } = Route.useLoaderData();
-  const lastUpdated = new Date().toLocaleString();
+  const lastUpdated = formatLastUpdated(new Date());
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -78,11 +77,9 @@ function Home() {
         <HealthTable data={data} />
       </div>
 
-      <p className="text-xs text-gray-600 text-center">
+      <p className="text-xs text-gray-600 text-left">
         Last updated:{" "}
-        <span className="font-medium text-gray-900">
-          {lastUpdated}
-        </span>
+        <span className="font-medium text-gray-900">{lastUpdated}</span>
       </p>
     </div>
   );

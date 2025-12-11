@@ -1,5 +1,6 @@
 import type { HealthEntry } from "~/types/health";
 import { CheckmarkIcon } from "./checkmark-icon";
+import { formatTableDate } from "~/utils/date-util";
 
 type HealthTableProps = {
   data: HealthEntry[];
@@ -44,7 +45,7 @@ export function HealthTable({ data }: HealthTableProps) {
           {data.map((entry, index) => (
             <tr key={index} className="hover:bg-gray-50">
               <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                {entry.Date || "-"}
+                {formatTableDate(entry.Date)}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                 {entry["Weight (kg)"] || "-"} kg
